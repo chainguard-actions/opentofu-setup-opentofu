@@ -1,6 +1,12 @@
 # opentofu/setup-opentofu
 
-Hardened GitHub Action by [Chainguard](https://www.chainguard.dev).
+Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/opentofu/setup-opentofu](https://github.com/opentofu/setup-opentofu).
+
+## Versions
+
+| Version | Tag | Upstream commit |
+|---------|-----|-----------------|
+| v2.0.0 | [`v2.0.0`](https://github.com/chainguard-actions/setup-opentofu/tree/v2.0.0) | — |
 
 ## Privacy
 
