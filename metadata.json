@@ -1,5 +1,5 @@
 {
   "owner": "opentofu",
   "name": "setup-opentofu",
-  "visibility": ""
+  "visibility": "internal"
 }
