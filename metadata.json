@@ -1,6 +1,0 @@
-{
-  "owner": "opentofu",
-  "name": "setup-opentofu",
-  "visibility": "internal",
-  "block_publish": false
-}
