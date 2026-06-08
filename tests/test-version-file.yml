@@ -1,0 +1,27 @@
+name: Test tofu_version_file input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create version file
+        run: |
+          echo "1.7.3" > .opentofu-version
+      - id: action
+        uses: .
+        with:
+          tofu_version_file: '.opentofu-version'
+          tofu_wrapper: 'false'
+      - name: Assert tofu is installed with version from file
+        run: |
+          echo "Checking tofu binary..."
+          which tofu
+          VERSION=$(tofu version | head -1)
+          echo "version: $VERSION"
+          if ! echo "$VERSION" | grep -q "1.7.3"; then
+            echo "FAIL: expected version 1.7.3 in output: $VERSION"
+            exit 1
+          fi
+          echo "PASS"

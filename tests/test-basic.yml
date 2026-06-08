@@ -1,0 +1,24 @@
+name: Test basic usage - install specific version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'false'
+      - name: Assert tofu is installed and correct version
+        run: |
+          echo "Checking tofu binary..."
+          which tofu
+          VERSION=$(tofu version | head -1)
+          echo "version: $VERSION"
+          if ! echo "$VERSION" | grep -q "1.8.0"; then
+            echo "FAIL: expected version 1.8.0 in output: $VERSION"
+            exit 1
+          fi
+          echo "PASS"

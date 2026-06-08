@@ -1,12 +1,323 @@
-# opentofu/setup-opentofu
+# GitHub Action for setting up OpenTofu
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/opentofu/setup-opentofu](https://github.com/opentofu/setup-opentofu).
+> [!NOTE]
+> This is a community-maintained repository. The OpenTofu team does not fix non-critical bugs or add features, but is happy to review community pull requests.
 
-## Versions
+> [!TIP]
+> Having trouble with exit codes or the output format? Try setting the `tofu_wrapper` setting to `false`.
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v2.0.0 | [`v2.0.0`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v2.0.0) | — |
+The `opentofu/setup-opentofu` action sets up OpenTofu CLI in GitHub Actions.
+
+## Usage
+
+This action can be run on `ubuntu-latest`, `windows-latest`, and `macos-latest` GitHub Actions runners. When running on `windows-latest` the shell should be set to Bash.
+
+The default configuration installs the latest version of OpenTofu CLI and installs the wrapper script to wrap subsequent calls to the `tofu` binary:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+```
+
+A specific version of OpenTofu CLI can be installed:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    tofu_version: 1.6.0
+```
+
+You can also specify the version in a file (e.g., `.opentofu-version`):
+
+```yaml
+steps:
+  - uses: opentofu/setup-opentofu@v2
+    with:
+      tofu_version_file: .opentofu-version
+```
+
+Supported version syntax is the same as for the `tofu_version` input. If both `tofu_version` and `tofu_version_file` are provided, the version number in the file takes precedence.
+
+Credentials for Terraform Cloud ([app.terraform.io](https://app.terraform.io/)) can be configured:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+```
+
+Credentials for Terraform Enterprise (TFE) can be configured:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    cli_config_credentials_hostname: 'tofu.example.com'
+    cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+```
+
+The wrapper script installation can be skipped by setting the `tofu_wrapper` variable to `false`:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    tofu_wrapper: false
+```
+
+Caching can be enabled to reduce download time on subsequent workflow runs by storing the OpenTofu binary using the GitHub Actions [tool-cache](https://github.com/actions/toolkit/tree/main/packages/tool-cache). Note that this feature is primarily useful for self-hosted runners that support toolchain caching, since GitHub-hosted runners are ephemeral and do not persist the tool cache between runs:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    cache: true
+```
+
+Provider acceptance test environment variables can be configured automatically by setting `provider_acceptance_tests` to `true`. This exports `TF_ACC`, `TF_ACC_PROVIDER_NAMESPACE`, `TF_ACC_PROVIDER_HOST`, and `TF_ACC_TERRAFORM_PATH` so you don't need to set them manually:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    tofu_wrapper: false
+    provider_acceptance_tests: true
+- run: go mod download
+- run: go test -v -cover ./...
+  timeout-minutes: 10
+```
+
+Validation can be enabled to check the downloaded OpenTofu CLI SHA256 hash against a newline-delimited list of checksums:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+  with:
+    checksums: |
+    933b060ab1cf05b106e94af1d370fd14b3006a6845495a67c68734269cc705ad
+    d3d29f51e75a701fc7cf67c0644a8c883a85f36cf1621461988baffd88e7f361
+```
+
+Subsequent steps can access outputs when the wrapper script is installed:
+
+```yaml
+steps:
+- uses: opentofu/setup-opentofu@v2
+
+- run: tofu init
+
+- id: plan
+  run: tofu plan -no-color
+
+- run: echo ${{ steps.plan.outputs.stdout }}
+- run: echo ${{ steps.plan.outputs.stderr }}
+- run: echo ${{ steps.plan.outputs.exitcode }}
+```
+
+Outputs can be used in subsequent steps to comment on the pull request:
+
+> **Notice:** There's a limit to the number of characters inside a GitHub comment (65535).
+>
+> Due to that limitation, you might end up with a failed workflow run even if the plan succeeded.
+>
+> Another approach is to append your plan into the $GITHUB_STEP_SUMMARY environment variable which supports markdown.
+
+```yaml
+defaults:
+  run:
+    working-directory: ${{ env.tf_actions_working_dir }}
+permissions:
+  pull-requests: write
+steps:
+- uses: actions/checkout@v6
+- uses: opentofu/setup-opentofu@v2
+
+- name: OpenTofu fmt
+  id: fmt
+  run: tofu fmt -check
+  continue-on-error: true
+
+- name: OpenTofu Init
+  id: init
+  run: tofu init
+
+- name: OpenTofu Validate
+  id: validate
+  run: tofu validate -no-color
+
+- name: OpenTofu Plan
+  id: plan
+  run: tofu plan -no-color
+  continue-on-error: true
+
+- uses: actions/github-script@v6
+  if: github.event_name == 'pull_request'
+  env:
+    PLAN: "tofu\n${{ steps.plan.outputs.stdout }}"
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    script: |
+      const output = `#### OpenTofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+      #### OpenTofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+      #### OpenTofu Validation 🤖\`${{ steps.validate.outcome }}\`
+      <details><summary>Validation Output</summary>
+
+      \`\`\`\n
+      ${{ steps.validate.outputs.stdout }}
+      \`\`\`
+
+      </details>
+
+      #### OpenTofu Plan 📖\`${{ steps.plan.outcome }}\`
+
+      <details><summary>Show Plan</summary>
+
+      \`\`\`\n
+      ${process.env.PLAN}
+      \`\`\`
+
+      </details>
+
+      *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+      github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: output
+      })
+```
+
+Instead of creating a new comment each time, you can also update an existing one:
+
+```yaml
+defaults:
+  run:
+    working-directory: ${{ env.tf_actions_working_dir }}
+permissions:
+  pull-requests: write
+steps:
+- uses: actions/checkout@v6
+- uses: opentofu/setup-opentofu@v2
+
+- name: OpenTofu fmt
+  id: fmt
+  run: tofu fmt -check
+  continue-on-error: true
+
+- name: OpenTofu Init
+  id: init
+  run: tofu init
+
+- name: OpenTofu Validate
+  id: validate
+  run: tofu validate -no-color
+
+- name: OpenTofu Plan
+  id: plan
+  run: tofu plan -no-color
+  continue-on-error: true
+
+- uses: actions/github-script@v6
+  if: github.event_name == 'pull_request'
+  env:
+    PLAN: "tofu\n${{ steps.plan.outputs.stdout }}"
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    script: |
+      // 1. Retrieve existing bot comments for the PR
+      const { data: comments } = await github.rest.issues.listComments({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.issue.number,
+      })
+      const botComment = comments.find(comment => {
+        return comment.user.type === 'Bot' && comment.body.includes('OpenTofu Format and Style')
+      })
+
+      // 2. Prepare format of the comment
+      const output = `#### OpenTofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+      #### OpenTofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+      #### OpenTofu Validation 🤖\`${{ steps.validate.outcome }}\`
+      <details><summary>Validation Output</summary>
+
+      \`\`\`\n
+      ${{ steps.validate.outputs.stdout }}
+      \`\`\`
+
+      </details>
+
+      #### OpenTofu Plan 📖\`${{ steps.plan.outcome }}\`
+
+      <details><summary>Show Plan</summary>
+
+      \`\`\`\n
+      ${process.env.PLAN}
+      \`\`\`
+
+      </details>
+
+      *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+      // 3. If we have a comment, update it, otherwise create a new one
+      if (botComment) {
+        github.rest.issues.updateComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          comment_id: botComment.id,
+          body: output
+        })
+      } else {
+        github.rest.issues.createComment({
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: output
+        })
+      }
+```
+
+## Inputs
+
+The action supports the following inputs:
+
+- `cli_config_credentials_hostname` - (optional) The hostname of a Terraform Cloud/Enterprise instance to
+  place within the credentials block of the OpenTofu CLI configuration file. Defaults to `app.terraform.io`.
+- `cli_config_credentials_token` - (optional) The API token for a Terraform Cloud/Enterprise instance to
+  place within the credentials block of the OpenTofu CLI configuration file.
+- `tofu_version` - (optional) The version of OpenTofu CLI to install. Instead of a full version string,
+  you can also specify a constraint string (see [Semver Ranges](https://www.npmjs.com/package/semver#ranges)
+  for available range specifications). Examples are: `<1.6.0-beta`, `~1.6.0-alpha`, `1.6.0-alpha2` (all three installing
+  the latest available `1.6.0-alpha2` version). Prerelease versions can be specified and a range will stay within the
+  given tag such as `beta` or `rc`. If no version is given, it will default to `latest`.
+- `tofu_version_file` - (optional) Path to a file containing the OpenTofu version to install. Supported version syntax
+  is the same as for the `tofu_version` input. Takes precedence over `tofu_version` if both are provided.
+- `tofu_wrapper` - (optional) Whether to install a wrapper to wrap subsequent calls of
+  the `tofu` binary and expose its STDOUT, STDERR, and exit code as outputs
+  named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
+- `cache` - (optional) Whether to use GitHub Actions tool-cache to store and reuse downloaded OpenTofu binaries. Defaults to `false`.
+- `provider_acceptance_tests` - (optional) Whether to automatically set environment variables for running
+  OpenTofu provider acceptance tests. When set to `true`, the following environment variables are exported:
+  `TF_ACC=1`, `TF_ACC_PROVIDER_NAMESPACE=hashicorp`, `TF_ACC_PROVIDER_HOST=registry.opentofu.org`, and
+  `TF_ACC_TERRAFORM_PATH=<path to tofu binary>`. Defaults to `false`.
+- `github_token` - (optional) Override the GitHub token read from the environment variable. Defaults to the value of the `GITHUB_TOKEN` environment variable unless running on Forgejo or Gitea.
+- `checksums` - (optional) A newline-delimited list of valid checksums (SHA256) for the downloaded OpenTofu CLI ZIP. When set, the action will verify the ZIP matches one of the checksums before proceeding. Defaults to `[]`
+
+## Outputs
+
+This action does not configure any outputs directly. However, when you set the `tofu_wrapper` input
+to `true`, the following outputs are available for subsequent steps that call the `tofu` binary:
+
+- `stdout` - The STDOUT stream of the call to the `tofu` binary.
+- `stderr` - The STDERR stream of the call to the `tofu` binary.
+- `exitcode` - The exit code of the call to the `tofu` binary.
+
+## License
+
+[Mozilla Public License v2.0](LICENSE)
+
 
 ## Privacy
 
