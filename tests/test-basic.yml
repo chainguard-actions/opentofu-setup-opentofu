@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test basic setup-opentofu usage
 on:
   workflow_dispatch:
 jobs:
