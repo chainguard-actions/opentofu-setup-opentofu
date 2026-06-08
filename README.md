@@ -1,5 +1,7 @@
 # opentofu/setup-opentofu
 
+Sets up OpenTofu CLI in your GitHub Actions workflow.
+
 Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/opentofu/setup-opentofu](https://github.com/opentofu/setup-opentofu).
 
 ## Versions
@@ -7,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v2.0.0 | [`v2.0.0`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v2.0.0) | — |
+| v2.0.1 | [`v2.0.1`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v2.0.1) | [`847eaa4`](https://github.com/opentofu/setup-opentofu/commit/847eaa4afeb791b06daa46e8eafa8b1b68d7cfb4) |
 
 ## Privacy
 
