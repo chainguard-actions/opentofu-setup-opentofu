@@ -1,6 +1,11 @@
 {
   "owner": "opentofu",
   "repo": "setup-opentofu",
-  "version": "",
-  "url": "https://github.com/opentofu/setup-opentofu"
+  "version": "v1.0.8",
+  "commit_sha": "9d84900f3238fab8cd84ce47d658d25dd008be2f",
+  "url": "https://github.com/opentofu/setup-opentofu",
+  "policy_sha": "ff50f15e4b79bfbf764dafdfd2579175a6ea9771",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
 }
