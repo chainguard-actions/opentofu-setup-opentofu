@@ -1,4 +1,4 @@
-name: Test tofu_version_file input
+name: Test version file input
 on:
   workflow_dispatch:
 jobs:
@@ -9,15 +9,15 @@ jobs:
       - id: action
         uses: .
         with:
-          tofu_version_file: 'actions/hardened/opentofu--setup-opentofu/v2.0.0/tests/fixtures/tofu-version/.opentofu-version'
+          tofu_version_file: '${{ github.workspace }}/actions/hardened/opentofu--setup-opentofu/v2.0.0/tests/fixtures/.opentofu-version'
           tofu_wrapper: 'false'
-      - name: Assert tofu is installed with version from file
+      - name: Assert tofu version from file matches expected
         run: |
-          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
-          TOFU_VERSION=$(tofu version -json | grep '"tofu_version"' | sed 's/.*"tofu_version": *"\([^"]*\)".*/\1/')
-          echo "Installed tofu version: $TOFU_VERSION"
-          if [ "$TOFU_VERSION" != "1.8.0" ]; then
-            echo "FAIL: expected version 1.8.0, got $TOFU_VERSION"
+          echo "Checking tofu version installed from version file..."
+          ACTUAL_VERSION=$(tofu version | head -1)
+          echo "actual: $ACTUAL_VERSION"
+          if ! echo "$ACTUAL_VERSION" | grep -q "1.8.0"; then
+            echo "FAIL: expected version 1.8.0 (from version file) but got: $ACTUAL_VERSION"
             exit 1
           fi
-          echo "PASS: tofu version matches version file"
+          echo "PASS: tofu version 1.8.0 installed from version file"
