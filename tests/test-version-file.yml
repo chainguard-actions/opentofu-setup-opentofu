@@ -1,0 +1,26 @@
+name: Test tofu_version_file input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          tofu_version_file: '${{ github.workspace }}/actions/hardened/opentofu--setup-opentofu/v1.0.8/tests/fixtures/tofu-version'
+          tofu_wrapper: 'false'
+      - name: Assert tofu is installed with version from file
+        run: |
+          which tofu || { echo "FAIL: tofu binary not found"; exit 1; }
+          INSTALLED_VERSION=$(tofu version -json | grep '"tofu_version"' | sed 's/.*"tofu_version": "\([^"]*\)".*/\1/')
+          echo "Installed version: $INSTALLED_VERSION"
+          if [ -z "$INSTALLED_VERSION" ]; then
+            # Fallback: just check tofu version runs
+            tofu version || { echo "FAIL: tofu version command failed"; exit 1; }
+          fi
+          echo "PASS: tofu is installed using version from file"

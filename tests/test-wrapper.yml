@@ -1,0 +1,31 @@
+name: Test tofu wrapper enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          tofu_version: 'latest'
+          tofu_wrapper: 'true'
+      - name: Run tofu version via wrapper
+        id: tofu_run
+        run: tofu version
+      - name: Assert tofu wrapper outputs are available
+        env:
+          STDOUT: ${{ steps.tofu_run.outputs.stdout }}
+          EXITCODE: ${{ steps.tofu_run.outputs.exitcode }}
+        run: |
+          echo "stdout: $STDOUT"
+          echo "exitcode: $EXITCODE"
+          if [ "$EXITCODE" != "0" ]; then
+            echo "FAIL: expected exitcode 0, got '$EXITCODE'"
+            exit 1
+          fi
+          echo "PASS: wrapper outputs are available and exitcode is 0"

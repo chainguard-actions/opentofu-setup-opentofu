@@ -1,9 +1,12 @@
-name: Test basic setup with latest version
+name: Test basic usage - setup opentofu with latest version
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
@@ -13,6 +16,6 @@ jobs:
           tofu_wrapper: 'false'
       - name: Assert tofu is installed
         run: |
-          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
-          tofu version
-          echo "PASS: tofu is installed"
+          which tofu || { echo "FAIL: tofu binary not found"; exit 1; }
+          tofu version || { echo "FAIL: tofu version command failed"; exit 1; }
+          echo "PASS: tofu is installed and working"
