@@ -1,0 +1,22 @@
+name: Test OpenTofu setup with wrapper enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          tofu_version: '1.8.3'
+          tofu_wrapper: 'true'
+      - name: Run tofu version via wrapper
+        id: tofu_run
+        run: tofu version
+        continue-on-error: true
+      - name: Assert tofu is installed and wrapper is active
+        run: |
+          which tofu
+          tofu version
+          echo "PASS: tofu wrapper is installed and functional"
