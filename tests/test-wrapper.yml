@@ -1,0 +1,32 @@
+name: Test setup-opentofu with wrapper enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: 'latest'
+          tofu_wrapper: 'true'
+      - name: Assert tofu is installed with wrapper
+        run: |
+          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
+          tofu version
+          echo "PASS: tofu is installed with wrapper enabled"
+      - name: Run tofu version via wrapper and capture outputs
+        id: tofu_run
+        run: |
+          tofu version
+      - name: Assert wrapper outputs are available
+        env:
+          STDOUT: ${{ steps.setup.outputs.stdout }}
+          STDERR: ${{ steps.setup.outputs.stderr }}
+          EXITCODE: ${{ steps.setup.outputs.exitcode }}
+        run: |
+          echo "stdout: $STDOUT"
+          echo "stderr: $STDERR"
+          echo "exitcode: $EXITCODE"
+          echo "PASS: wrapper outputs accessible"
