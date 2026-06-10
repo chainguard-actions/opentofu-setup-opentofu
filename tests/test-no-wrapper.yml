@@ -1,4 +1,4 @@
-name: Test tofu_version_file input
+name: Test no wrapper mode
 on:
   workflow_dispatch:
 jobs:
@@ -6,24 +6,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create version file
-        run: |
-          echo "1.9.0" > /tmp/tofu-version-file
       - id: action
         uses: .
         with:
-          tofu_version_file: '/tmp/tofu-version-file'
+          tofu_version: '1.8.0'
           tofu_wrapper: 'false'
       - name: Assert tofu is installed
         run: |
           which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
           echo "PASS: tofu binary found"
-      - name: Assert tofu version matches version file
+      - name: Assert tofu version is correct
         run: |
           INSTALLED_VERSION=$(tofu version -json | grep '"tofu_version"' | sed 's/.*"tofu_version": *"\([^"]*\)".*/\1/')
           echo "Installed version: $INSTALLED_VERSION"
-          if [ "$INSTALLED_VERSION" != "1.9.0" ]; then
-            echo "FAIL: expected version 1.9.0, got $INSTALLED_VERSION"
+          if [ "$INSTALLED_VERSION" != "1.8.0" ]; then
+            echo "FAIL: expected version 1.8.0, got $INSTALLED_VERSION"
             exit 1
           fi
           echo "PASS: correct version installed"

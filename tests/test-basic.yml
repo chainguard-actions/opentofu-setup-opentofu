@@ -1,4 +1,4 @@
-name: Test basic setup-opentofu
+name: Test basic usage - setup opentofu with defaults
 on:
   workflow_dispatch:
 jobs:
@@ -10,9 +10,12 @@ jobs:
         uses: .
         with:
           tofu_version: 'latest'
-          tofu_wrapper: 'false'
+          tofu_wrapper: 'true'
       - name: Assert tofu is installed
         run: |
-          which tofu || { echo "FAIL: tofu binary not found"; exit 1; }
+          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
+          echo "PASS: tofu binary found"
+      - name: Assert tofu version command works
+        run: |
           tofu version || { echo "FAIL: tofu version command failed"; exit 1; }
-          echo "PASS: tofu is installed"
+          echo "PASS: tofu version command succeeded"
