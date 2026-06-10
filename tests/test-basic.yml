@@ -1,4 +1,4 @@
-name: Test basic usage - latest version
+name: Test basic setup with latest version
 on:
   workflow_dispatch:
 jobs:
@@ -11,9 +11,8 @@ jobs:
         with:
           tofu_version: 'latest'
           tofu_wrapper: 'false'
-      - name: Assert tofu binary is available
+      - name: Assert tofu is installed
         run: |
-          echo "Checking tofu binary..."
-          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
+          which tofu
           tofu version
-          echo "PASS: tofu binary is available"
+          echo "PASS: tofu is installed and runnable"
