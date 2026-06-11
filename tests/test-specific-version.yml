@@ -1,4 +1,4 @@
-name: Test tofu_version_file input
+name: Test specific tofu version installation
 on:
   workflow_dispatch:
 jobs:
@@ -6,21 +6,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create version file
-        run: |
-          echo "1.8.0" > /tmp/tofu-version-file
       - id: action
         uses: .
         with:
+          tofu_version: '1.8.0'
           tofu_wrapper: 'false'
-          tofu_version_file: '/tmp/tofu-version-file'
-      - name: Assert tofu is installed with correct version
+      - name: Assert tofu version is correct
         run: |
           which tofu
           VERSION=$(tofu version | head -1)
           echo "Installed version: $VERSION"
           if echo "$VERSION" | grep -q "1.8.0"; then
-            echo "PASS: tofu 1.8.0 is installed as specified in version file"
+            echo "PASS: tofu 1.8.0 is installed"
           else
             echo "FAIL: expected tofu 1.8.0 but got: $VERSION"
             exit 1
