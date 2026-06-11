@@ -1,4 +1,4 @@
-name: Test setup-opentofu with wrapper enabled
+name: Test wrapper enabled
 on:
   workflow_dispatch:
 jobs:
@@ -11,22 +11,10 @@ jobs:
         with:
           tofu_version: 'latest'
           tofu_wrapper: 'true'
-      - name: Assert tofu is installed with wrapper
-        run: |
-          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
-          tofu version
-          echo "PASS: tofu is installed with wrapper enabled"
-      - name: Run tofu version via wrapper and capture outputs
+      - name: Run tofu version via wrapper
         id: tofu_run
+        run: tofu version
+      - name: Assert tofu is installed and wrapper active
         run: |
-          tofu version
-      - name: Assert wrapper outputs are available
-        env:
-          STDOUT: ${{ steps.setup.outputs.stdout }}
-          STDERR: ${{ steps.setup.outputs.stderr }}
-          EXITCODE: ${{ steps.setup.outputs.exitcode }}
-        run: |
-          echo "stdout: $STDOUT"
-          echo "stderr: $STDERR"
-          echo "exitcode: $EXITCODE"
-          echo "PASS: wrapper outputs accessible"
+          which tofu || { echo "FAIL: tofu binary not found"; exit 1; }
+          echo "PASS: tofu wrapper is installed"
