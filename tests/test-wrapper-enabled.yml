@@ -1,0 +1,56 @@
+name: Test wrapper enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'true'
+          github_token: ${{ github.token }}
+      - name: Assert tofu binary is available
+        run: |
+          echo "Checking tofu binary..."
+          if ! command -v tofu >/dev/null 2>&1; then
+            echo "FAIL: tofu binary not found in PATH"
+            exit 1
+          fi
+          echo "PASS: tofu binary found at $(which tofu)"
+      - name: Assert TOFU_CLI_PATH is set
+        run: |
+          echo "TOFU_CLI_PATH: $TOFU_CLI_PATH"
+          if [ -z "$TOFU_CLI_PATH" ]; then
+            echo "FAIL: TOFU_CLI_PATH environment variable is not set by wrapper installation"
+            exit 1
+          fi
+          echo "PASS: TOFU_CLI_PATH=$TOFU_CLI_PATH"
+      - name: Assert tofu-bin exists alongside tofu wrapper
+        run: |
+          echo "TOFU_CLI_PATH: $TOFU_CLI_PATH"
+          if [ ! -f "$TOFU_CLI_PATH/tofu-bin" ]; then
+            echo "FAIL: tofu-bin not found at $TOFU_CLI_PATH/tofu-bin"
+            ls -la "$TOFU_CLI_PATH/" || true
+            exit 1
+          fi
+          echo "PASS: tofu-bin found at $TOFU_CLI_PATH/tofu-bin"
+      - name: Assert tofu wrapper is a script (not the real binary)
+        run: |
+          TOFU_PATH=$(which tofu)
+          echo "tofu path: $TOFU_PATH"
+          FILE_TYPE=$(file "$TOFU_PATH" 2>&1 || echo "unknown")
+          echo "file type: $FILE_TYPE"
+          # The wrapper should be a Node.js script or text file, not an ELF binary
+          if echo "$FILE_TYPE" | grep -qiE "script|text|node|javascript"; then
+            echo "PASS: tofu is a wrapper script"
+          elif echo "$FILE_TYPE" | grep -qi "ELF"; then
+            echo "FAIL: tofu appears to be an ELF binary, not a wrapper script"
+            exit 1
+          else
+            echo "INFO: file type is '$FILE_TYPE' - checking if wrapper is functional"
+            # Try running tofu version to verify it works
+            tofu version && echo "PASS: tofu wrapper runs successfully"
+          fi

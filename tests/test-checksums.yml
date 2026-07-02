@@ -1,0 +1,31 @@
+name: Test checksums input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Get OpenTofu checksum
+        id: get-checksum
+        run: |
+          VERSION="1.8.3"
+          FILENAME="opentofu_${VERSION}_linux_amd64.zip"
+          CHECKSUM=$(curl -fsSL "https://github.com/opentofu/opentofu/releases/download/v${VERSION}/opentofu_${VERSION}_SHA256SUMS" \
+            | grep "${FILENAME}" | awk '{print $1}')
+          echo "checksum=${CHECKSUM}" >> "$GITHUB_OUTPUT"
+          echo "Fetched checksum: ${CHECKSUM}"
+      - id: action
+        uses: .
+        with:
+          tofu_version: '1.8.3'
+          tofu_wrapper: 'false'
+          checksums: ${{ steps.get-checksum.outputs.checksum }}
+      - name: Assert tofu is installed
+        run: |
+          if ! command -v tofu &>/dev/null; then
+            echo "FAIL: tofu binary not found in PATH"
+            exit 1
+          fi
+          echo "PASS: tofu is installed"
+          tofu version

@@ -1,0 +1,34 @@
+name: Test specific version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'false'
+          github_token: ${{ github.token }}
+      - name: Assert tofu binary is available
+        run: |
+          echo "Checking tofu binary..."
+          if ! command -v tofu >/dev/null 2>&1; then
+            echo "FAIL: tofu binary not found in PATH"
+            exit 1
+          fi
+          echo "PASS: tofu binary found at $(which tofu)"
+      - name: Assert correct version is installed
+        run: |
+          OUTPUT=$(tofu version 2>&1)
+          echo "tofu version output: $OUTPUT"
+          # Extract version from output like "OpenTofu v1.8.0"
+          VERSION=$(echo "$OUTPUT" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          echo "Parsed version: $VERSION"
+          if [ "$VERSION" != "1.8.0" ]; then
+            echo "FAIL: expected version 1.8.0, got '$VERSION'"
+            exit 1
+          fi
+          echo "PASS: correct version 1.8.0 installed"
