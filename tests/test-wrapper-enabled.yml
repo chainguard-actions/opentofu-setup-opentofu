@@ -1,0 +1,37 @@
+name: Test wrapper enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'true'
+          github_token: ${{ github.token }}
+      - name: Run tofu version via wrapper
+        id: tofu_run
+        run: tofu version
+      - name: Assert wrapper captures stdout
+        env:
+          STDOUT: ${{ steps.tofu_run.outputs.stdout }}
+        run: |
+          echo "stdout: $STDOUT"
+          if [ -z "$STDOUT" ]; then
+            echo "FAIL: expected stdout to be non-empty from wrapper"
+            exit 1
+          fi
+          echo "PASS: wrapper captured stdout"
+      - name: Assert wrapper captures exitcode
+        env:
+          EXITCODE: ${{ steps.tofu_run.outputs.exitcode }}
+        run: |
+          echo "exitcode: $EXITCODE"
+          if [ "$EXITCODE" != "0" ]; then
+            echo "FAIL: expected exitcode 0, got $EXITCODE"
+            exit 1
+          fi
+          echo "PASS: wrapper captured exitcode 0"

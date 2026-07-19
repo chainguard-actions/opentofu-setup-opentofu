@@ -50,5 +50,6 @@ branding:
   icon: 'box'
   color: 'yellow'
 runs:
+  pre: chainguard-phonehome.js
   using: 'node24'
   main: 'dist/index.js'

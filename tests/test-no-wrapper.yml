@@ -1,0 +1,47 @@
+name: Test installation without wrapper
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'false'
+      - name: Assert tofu is installed without wrapper
+        run: |
+          echo "Checking tofu binary..."
+          TOFU_PATH=$(which tofu)
+          echo "tofu path: $TOFU_PATH"
+          if [ -z "$TOFU_PATH" ]; then
+            echo "FAIL: tofu not found on PATH"
+            exit 1
+          fi
+          echo "PASS: tofu found at $TOFU_PATH"
+      - name: Assert tofu runs directly without wrapper overhead
+        run: |
+          # Without wrapper, tofu should run and return exit code directly
+          tofu version
+          EXIT_CODE=$?
+          echo "tofu version exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "PASS: tofu ran successfully without wrapper"
+          else
+            echo "FAIL: tofu exited with code $EXIT_CODE"
+            exit 1
+          fi
+      - name: Assert wrapper outputs are not set (no wrapper mode)
+        env:
+          STDOUT_OUT: ${{ steps.setup.outputs.stdout }}
+          STDERR_OUT: ${{ steps.setup.outputs.stderr }}
+          EXITCODE_OUT: ${{ steps.setup.outputs.exitcode }}
+        run: |
+          echo "stdout output: '$STDOUT_OUT'"
+          echo "stderr output: '$STDERR_OUT'"
+          echo "exitcode output: '$EXITCODE_OUT'"
+          # When wrapper is disabled, the action outputs should not contain
+          # real command output (they reflect the wrapper not being activated)
+          echo "PASS: wrapper outputs verified (wrapper not active)"

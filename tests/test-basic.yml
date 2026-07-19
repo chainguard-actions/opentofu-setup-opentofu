@@ -1,4 +1,4 @@
-name: Test basic OpenTofu setup
+name: Test basic usage - install latest OpenTofu
 on:
   workflow_dispatch:
 jobs:
@@ -6,13 +6,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          tofu_version: '1.8.3'
-          tofu_wrapper: 'false'
-      - name: Assert tofu is installed
+          tofu_version: 'latest'
+          tofu_wrapper: 'true'
+      - name: Assert tofu is installed and on PATH
         run: |
-          which tofu
-          tofu version
-          echo "PASS: tofu is installed"
+          echo "Checking tofu binary..."
+          which tofu || { echo "FAIL: tofu not found on PATH"; exit 1; }
+          echo "PASS: tofu found on PATH"
+      - name: Assert tofu version output
+        run: |
+          VERSION_OUTPUT=$(tofu version 2>&1 || true)
+          echo "tofu version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -qi "opentofu\|tofu"; then
+            echo "PASS: tofu version output contains expected text"
+          else
+            echo "FAIL: unexpected tofu version output"
+            exit 1
+          fi

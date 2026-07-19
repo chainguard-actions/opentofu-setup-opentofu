@@ -1,0 +1,32 @@
+name: Test wrapper disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'false'
+          github_token: ${{ github.token }}
+      - name: Assert tofu runs directly without wrapper
+        run: |
+          echo "Running tofu version directly..."
+          tofu version
+          echo "Exit code: $?"
+          echo "PASS: tofu runs directly without wrapper"
+      - name: Assert tofu binary is the real binary not a wrapper script
+        run: |
+          TOFU_PATH=$(which tofu)
+          echo "tofu path: $TOFU_PATH"
+          # When wrapper is disabled, the binary should be the real tofu binary (ELF), not a shell script
+          FILE_TYPE=$(file "$TOFU_PATH")
+          echo "file type: $FILE_TYPE"
+          if echo "$FILE_TYPE" | grep -q "shell script"; then
+            echo "FAIL: tofu appears to be a wrapper shell script, expected real binary"
+            exit 1
+          fi
+          echo "PASS: tofu is the real binary (not a wrapper script)"

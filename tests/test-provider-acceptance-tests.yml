@@ -1,0 +1,41 @@
+name: Test provider acceptance tests env vars
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.8.0'
+          tofu_wrapper: 'false'
+          provider_acceptance_tests: 'true'
+          github_token: ${{ github.token }}
+      - name: Assert TF_ACC is set
+        run: |
+          echo "TF_ACC: $TF_ACC"
+          if [ -z "$TF_ACC" ]; then
+            echo "FAIL: expected TF_ACC to be set"
+            exit 1
+          fi
+          echo "PASS: TF_ACC is set to $TF_ACC"
+      - name: Assert TF_ACC_TERRAFORM_PATH is set
+        run: |
+          echo "TF_ACC_TERRAFORM_PATH: $TF_ACC_TERRAFORM_PATH"
+          if [ -z "$TF_ACC_TERRAFORM_PATH" ]; then
+            echo "FAIL: expected TF_ACC_TERRAFORM_PATH to be set"
+            exit 1
+          fi
+          echo "PASS: TF_ACC_TERRAFORM_PATH is set to $TF_ACC_TERRAFORM_PATH"
+      - name: Assert TF_ACC_TERRAFORM_PATH points to tofu binary
+        run: |
+          TOFU_PATH=$(which tofu)
+          echo "tofu path: $TOFU_PATH"
+          echo "TF_ACC_TERRAFORM_PATH: $TF_ACC_TERRAFORM_PATH"
+          if [ "$TF_ACC_TERRAFORM_PATH" != "$TOFU_PATH" ]; then
+            echo "FAIL: expected TF_ACC_TERRAFORM_PATH=$TOFU_PATH, got $TF_ACC_TERRAFORM_PATH"
+            exit 1
+          fi
+          echo "PASS: TF_ACC_TERRAFORM_PATH points to tofu binary"
