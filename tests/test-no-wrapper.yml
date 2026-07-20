@@ -1,0 +1,41 @@
+name: Test no-wrapper mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.6.0'
+          tofu_wrapper: 'false'
+      - name: Assert tofu is installed and functional without wrapper
+        run: |
+          if ! which tofu; then
+            echo "FAIL: tofu binary not found on PATH"
+            exit 1
+          fi
+          VERSION_OUTPUT=$(tofu version)
+          echo "tofu version output: $VERSION_OUTPUT"
+          if ! echo "$VERSION_OUTPUT" | grep -qi "opentofu"; then
+            echo "FAIL: expected 'opentofu' in version output"
+            exit 1
+          fi
+          echo "PASS: tofu works without wrapper"
+      - name: Assert wrapper outputs are not set
+        env:
+          STDOUT: ${{ steps.setup.outputs.stdout }}
+          STDERR: ${{ steps.setup.outputs.stderr }}
+          EXITCODE: ${{ steps.setup.outputs.exitcode }}
+        run: |
+          echo "stdout: '$STDOUT'"
+          echo "stderr: '$STDERR'"
+          echo "exitcode: '$EXITCODE'"
+          # When wrapper is not active, stdout should be empty and stderr should indicate wrapper not activated
+          if [ -n "$STDOUT" ]; then
+            echo "FAIL: expected stdout to be empty when wrapper is not active, got: $STDOUT"
+            exit 1
+          fi
+          echo "PASS: wrapper outputs are not set as expected"

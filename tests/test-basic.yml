@@ -1,4 +1,4 @@
-name: Test basic usage - setup opentofu with defaults
+name: Test basic usage - install latest OpenTofu
 on:
   workflow_dispatch:
 jobs:
@@ -9,9 +9,22 @@ jobs:
       - id: setup
         uses: .
         with:
-          tofu_wrapper: 'false'
+          tofu_version: 'latest'
+          tofu_wrapper: 'true'
       - name: Assert tofu is installed
         run: |
           which tofu
-          tofu --version
-          echo "PASS: tofu binary is available"
+          if ! which tofu; then
+            echo "FAIL: tofu binary not found on PATH"
+            exit 1
+          fi
+          echo "PASS: tofu binary found"
+      - name: Assert tofu version output
+        run: |
+          VERSION_OUTPUT=$(tofu version)
+          echo "tofu version output: $VERSION_OUTPUT"
+          if ! echo "$VERSION_OUTPUT" | grep -qi "opentofu"; then
+            echo "FAIL: expected 'opentofu' in version output"
+            exit 1
+          fi
+          echo "PASS: version output contains 'opentofu'"

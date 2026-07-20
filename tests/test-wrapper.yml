@@ -1,31 +1,36 @@
-name: Test tofu wrapper enabled
+name: Test wrapper functionality
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_REF: refs/heads/main
-      GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          tofu_version: 'latest'
+          tofu_version: '1.6.0'
           tofu_wrapper: 'true'
       - name: Run tofu version via wrapper
-        id: tofu_run
+        id: tofu_version
         run: tofu version
-      - name: Assert tofu wrapper outputs are available
+      - name: Assert stdout output is captured
         env:
-          STDOUT: ${{ steps.tofu_run.outputs.stdout }}
-          EXITCODE: ${{ steps.tofu_run.outputs.exitcode }}
+          STDOUT: ${{ steps.tofu_version.outputs.stdout }}
+          EXITCODE: ${{ steps.tofu_version.outputs.exitcode }}
         run: |
           echo "stdout: $STDOUT"
           echo "exitcode: $EXITCODE"
-          if [ "$EXITCODE" != "0" ]; then
-            echo "FAIL: expected exitcode 0, got '$EXITCODE'"
+          if [ -z "$STDOUT" ]; then
+            echo "FAIL: expected stdout to be non-empty when wrapper is active"
             exit 1
           fi
-          echo "PASS: wrapper outputs are available and exitcode is 0"
+          if ! echo "$STDOUT" | grep -qi "opentofu"; then
+            echo "FAIL: expected 'opentofu' in stdout output"
+            exit 1
+          fi
+          if [ "$EXITCODE" != "0" ]; then
+            echo "FAIL: expected exitcode 0, got: $EXITCODE"
+            exit 1
+          fi
+          echo "PASS: wrapper captured stdout and exitcode correctly"
