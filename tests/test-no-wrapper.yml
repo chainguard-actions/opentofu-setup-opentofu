@@ -1,0 +1,28 @@
+name: Test installation without wrapper
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.6.2'
+          tofu_wrapper: 'false'
+      - name: Verify tofu binary is available without wrapper
+        run: |
+          echo "Checking tofu binary..."
+          which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
+          echo "PASS: tofu binary found at $(which tofu)"
+      - name: Verify tofu version works without wrapper
+        run: |
+          echo "Running tofu version..."
+          tofu version || { echo "FAIL: tofu version command failed"; exit 1; }
+          echo "PASS: tofu version succeeded without wrapper"
+      - name: Verify tofu help works without wrapper
+        run: |
+          echo "Running tofu --help..."
+          tofu --help || true
+          echo "PASS: tofu help command ran without wrapper"

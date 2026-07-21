@@ -1,0 +1,47 @@
+name: Test wrapper disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: '1.6.0'
+          tofu_wrapper: 'false'
+          github_token: ${{ github.token }}
+      - name: Assert tofu is installed without wrapper
+        run: |
+          echo "Checking tofu binary is available..."
+          if ! command -v tofu &>/dev/null; then
+            echo "FAIL: tofu binary not found in PATH"
+            exit 1
+          fi
+          echo "PASS: tofu binary found"
+      - name: Run tofu version directly (no wrapper)
+        id: tofu_direct
+        run: |
+          OUTPUT=$(tofu version)
+          echo "output: $OUTPUT"
+          if ! echo "$OUTPUT" | grep -qi "opentofu"; then
+            echo "FAIL: expected 'opentofu' in version output"
+            exit 1
+          fi
+          echo "PASS: tofu version ran successfully without wrapper"
+      - name: Assert wrapper outputs are not set
+        env:
+          STDOUT: ${{ steps.tofu_direct.outputs.stdout }}
+          STDERR: ${{ steps.tofu_direct.outputs.stderr }}
+          EXITCODE: ${{ steps.tofu_direct.outputs.exitcode }}
+        run: |
+          echo "stdout output: '$STDOUT'"
+          echo "stderr output: '$STDERR'"
+          echo "exitcode output: '$EXITCODE'"
+          # When wrapper is disabled, the step outputs stdout/stderr/exitcode should be empty
+          if [ -n "$STDOUT" ]; then
+            echo "FAIL: expected stdout to be empty when wrapper is disabled, got: $STDOUT"
+            exit 1
+          fi
+          echo "PASS: wrapper outputs are empty as expected when wrapper is disabled"
