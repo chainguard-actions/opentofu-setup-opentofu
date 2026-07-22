@@ -1,4 +1,4 @@
-name: Test tofu_version_file input
+name: Test version file - install OpenTofu from version file
 on:
   workflow_dispatch:
 jobs:
@@ -6,22 +6,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create version file
+      - name: Create .opentofu-version file
         run: |
-          echo "1.8.0" > /tmp/tofu-version-file
-      - id: action
+          echo "1.6.1" > "$GITHUB_WORKSPACE/.opentofu-version"
+          cat "$GITHUB_WORKSPACE/.opentofu-version"
+      - id: setup
         uses: .
         with:
-          tofu_wrapper: 'false'
-          tofu_version_file: '/tmp/tofu-version-file'
-      - name: Assert tofu is installed with correct version
+          tofu_version_file: '.opentofu-version'
+          github_token: ${{ github.token }}
+      - name: Assert tofu 1.6.1 is installed from version file
         run: |
-          which tofu
-          VERSION=$(tofu version | head -1)
-          echo "Installed version: $VERSION"
-          if echo "$VERSION" | grep -q "1.8.0"; then
-            echo "PASS: tofu 1.8.0 is installed as specified in version file"
-          else
-            echo "FAIL: expected tofu 1.8.0 but got: $VERSION"
+          echo "Checking tofu version..."
+          VERSION=$(tofu version 2>&1)
+          echo "actual version output: $VERSION"
+          if ! echo "$VERSION" | grep -q "1.6.1"; then
+            echo "FAIL: expected version 1.6.1 (from version file) but got: $VERSION"
             exit 1
           fi
+          echo "PASS: tofu 1.6.1 installed from version file"

@@ -1,4 +1,4 @@
-name: Test specific tofu version installation
+name: Test specific version installation
 on:
   workflow_dispatch:
 jobs:
@@ -6,19 +6,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          tofu_version: '1.8.0'
-          tofu_wrapper: 'false'
-      - name: Assert tofu version is correct
+          tofu_version: '1.6.0'
+          github_token: ${{ github.token }}
+      - name: Assert tofu 1.6.0 is installed
         run: |
-          which tofu
-          VERSION=$(tofu version | head -1)
-          echo "Installed version: $VERSION"
-          if echo "$VERSION" | grep -q "1.8.0"; then
-            echo "PASS: tofu 1.8.0 is installed"
-          else
-            echo "FAIL: expected tofu 1.8.0 but got: $VERSION"
+          echo "Checking tofu version..."
+          VERSION=$(tofu version 2>&1)
+          echo "actual version output: $VERSION"
+          if ! echo "$VERSION" | grep -q "1.6.0"; then
+            echo "FAIL: expected version 1.6.0 but got: $VERSION"
             exit 1
           fi
+          echo "PASS: tofu 1.6.0 is installed"

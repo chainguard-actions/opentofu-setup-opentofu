@@ -1,4 +1,4 @@
-name: Test no wrapper mode
+name: Test installation without wrapper
 on:
   workflow_dispatch:
 jobs:
@@ -6,21 +6,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: action
+      - id: setup
         uses: .
         with:
-          tofu_version: '1.8.0'
+          tofu_version: '1.6.0'
           tofu_wrapper: 'false'
-      - name: Assert tofu is installed
+          github_token: ${{ github.token }}
+      - name: Assert tofu is installed without wrapper
         run: |
+          echo "Checking tofu binary is available..."
           which tofu || { echo "FAIL: tofu binary not found in PATH"; exit 1; }
-          echo "PASS: tofu binary found"
-      - name: Assert tofu version is correct
+          echo "PASS: tofu binary found at $(which tofu)"
+      - name: Assert tofu runs directly without wrapper
         run: |
-          INSTALLED_VERSION=$(tofu version -json | grep '"tofu_version"' | sed 's/.*"tofu_version": *"\([^"]*\)".*/\1/')
-          echo "Installed version: $INSTALLED_VERSION"
-          if [ "$INSTALLED_VERSION" != "1.8.0" ]; then
-            echo "FAIL: expected version 1.8.0, got $INSTALLED_VERSION"
+          echo "Running tofu version directly (no wrapper)..."
+          tofu version
+          EXIT_CODE=$?
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "FAIL: tofu version exited with code $EXIT_CODE"
             exit 1
           fi
-          echo "PASS: correct version installed"
+          echo "PASS: tofu ran successfully without wrapper"
