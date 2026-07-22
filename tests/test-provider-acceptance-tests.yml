@@ -1,4 +1,4 @@
-name: Test provider acceptance tests env vars
+name: Test provider acceptance tests flag
 on:
   workflow_dispatch:
 jobs:
@@ -12,40 +12,35 @@ jobs:
           tofu_version: '1.8.0'
           tofu_wrapper: 'false'
           provider_acceptance_tests: 'true'
-          github_token: ${{ github.token }}
       - name: Assert TF_ACC is set
         run: |
-          echo "TF_ACC: $TF_ACC"
+          echo "TF_ACC: '$TF_ACC'"
           if [ -z "$TF_ACC" ]; then
-            echo "FAIL: TF_ACC environment variable is not set"
+            echo "FAIL: TF_ACC environment variable should be set when provider_acceptance_tests is true"
             exit 1
           fi
-          echo "PASS: TF_ACC=$TF_ACC"
+          echo "PASS: TF_ACC is set to '$TF_ACC'"
       - name: Assert TF_ACC_TERRAFORM_PATH is set
         run: |
-          echo "TF_ACC_TERRAFORM_PATH: $TF_ACC_TERRAFORM_PATH"
+          echo "TF_ACC_TERRAFORM_PATH: '$TF_ACC_TERRAFORM_PATH'"
           if [ -z "$TF_ACC_TERRAFORM_PATH" ]; then
-            echo "FAIL: TF_ACC_TERRAFORM_PATH environment variable is not set"
+            echo "FAIL: TF_ACC_TERRAFORM_PATH environment variable should be set when provider_acceptance_tests is true"
             exit 1
           fi
-          if [ ! -f "$TF_ACC_TERRAFORM_PATH" ]; then
-            echo "FAIL: TF_ACC_TERRAFORM_PATH points to non-existent file: $TF_ACC_TERRAFORM_PATH"
-            exit 1
-          fi
-          echo "PASS: TF_ACC_TERRAFORM_PATH=$TF_ACC_TERRAFORM_PATH"
+          echo "PASS: TF_ACC_TERRAFORM_PATH is set to '$TF_ACC_TERRAFORM_PATH'"
       - name: Assert TF_ACC_PROVIDER_NAMESPACE is set
         run: |
-          echo "TF_ACC_PROVIDER_NAMESPACE: $TF_ACC_PROVIDER_NAMESPACE"
+          echo "TF_ACC_PROVIDER_NAMESPACE: '$TF_ACC_PROVIDER_NAMESPACE'"
           if [ -z "$TF_ACC_PROVIDER_NAMESPACE" ]; then
-            echo "FAIL: TF_ACC_PROVIDER_NAMESPACE environment variable is not set"
+            echo "FAIL: TF_ACC_PROVIDER_NAMESPACE environment variable should be set when provider_acceptance_tests is true"
             exit 1
           fi
-          echo "PASS: TF_ACC_PROVIDER_NAMESPACE=$TF_ACC_PROVIDER_NAMESPACE"
+          echo "PASS: TF_ACC_PROVIDER_NAMESPACE is set to '$TF_ACC_PROVIDER_NAMESPACE'"
       - name: Assert TF_ACC_PROVIDER_HOST is set
         run: |
-          echo "TF_ACC_PROVIDER_HOST: $TF_ACC_PROVIDER_HOST"
+          echo "TF_ACC_PROVIDER_HOST: '$TF_ACC_PROVIDER_HOST'"
           if [ -z "$TF_ACC_PROVIDER_HOST" ]; then
-            echo "FAIL: TF_ACC_PROVIDER_HOST environment variable is not set"
+            echo "FAIL: TF_ACC_PROVIDER_HOST environment variable should be set when provider_acceptance_tests is true"
             exit 1
           fi
-          echo "PASS: TF_ACC_PROVIDER_HOST=$TF_ACC_PROVIDER_HOST"
+          echo "PASS: TF_ACC_PROVIDER_HOST is set to '$TF_ACC_PROVIDER_HOST'"

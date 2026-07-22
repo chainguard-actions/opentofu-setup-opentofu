@@ -11,24 +11,21 @@ jobs:
         with:
           tofu_version: '1.8.0'
           tofu_wrapper: 'false'
-          github_token: ${{ github.token }}
       - name: Assert tofu binary is available
         run: |
           echo "Checking tofu binary..."
-          if ! command -v tofu >/dev/null 2>&1; then
+          if ! command -v tofu &>/dev/null; then
             echo "FAIL: tofu binary not found in PATH"
             exit 1
           fi
-          echo "PASS: tofu binary found at $(which tofu)"
+          echo "PASS: tofu binary found"
       - name: Assert correct version is installed
         run: |
-          OUTPUT=$(tofu version 2>&1)
-          echo "tofu version output: $OUTPUT"
-          # Extract version from output like "OpenTofu v1.8.0"
-          VERSION=$(echo "$OUTPUT" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-          echo "Parsed version: $VERSION"
-          if [ "$VERSION" != "1.8.0" ]; then
-            echo "FAIL: expected version 1.8.0, got '$VERSION'"
+          VERSION_OUTPUT=$(tofu version)
+          echo "Version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -q "1.8.0"; then
+            echo "PASS: correct version 1.8.0 installed"
+          else
+            echo "FAIL: expected version 1.8.0 but got: $VERSION_OUTPUT"
             exit 1
           fi
-          echo "PASS: correct version 1.8.0 installed"

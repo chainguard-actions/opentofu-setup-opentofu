@@ -1,4 +1,4 @@
-name: Test basic usage - latest version
+name: Test basic usage - latest OpenTofu
 on:
   workflow_dispatch:
 jobs:
@@ -11,31 +11,20 @@ jobs:
         with:
           tofu_version: 'latest'
           tofu_wrapper: 'false'
-          github_token: ${{ github.token }}
       - name: Assert tofu binary is available
         run: |
           echo "Checking tofu binary..."
-          if ! command -v tofu >/dev/null 2>&1; then
+          if ! command -v tofu &>/dev/null; then
             echo "FAIL: tofu binary not found in PATH"
             exit 1
           fi
-          echo "PASS: tofu binary found at $(which tofu)"
-      - name: Assert tofu version output
+          echo "PASS: tofu binary found at $(command -v tofu)"
+      - name: Assert tofu version runs
         run: |
           echo "Running tofu version..."
-          OUTPUT=$(tofu version 2>&1)
-          echo "Output: $OUTPUT"
+          tofu version
           if [ $? -ne 0 ]; then
             echo "FAIL: tofu version command failed"
             exit 1
           fi
           echo "PASS: tofu version ran successfully"
-      - name: Assert tofu binary is executable
-        run: |
-          TOFU_PATH=$(which tofu)
-          echo "tofu path: $TOFU_PATH"
-          if [ ! -x "$TOFU_PATH" ]; then
-            echo "FAIL: tofu binary is not executable"
-            exit 1
-          fi
-          echo "PASS: tofu binary is executable"

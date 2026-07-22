@@ -6,26 +6,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Get OpenTofu checksum
-        id: get-checksum
+      - name: Fetch real checksum for OpenTofu 1.8.3 linux_amd64
         run: |
-          VERSION="1.8.3"
-          FILENAME="opentofu_${VERSION}_linux_amd64.zip"
-          CHECKSUM=$(curl -fsSL "https://github.com/opentofu/opentofu/releases/download/v${VERSION}/opentofu_${VERSION}_SHA256SUMS" \
-            | grep "${FILENAME}" | awk '{print $1}')
-          echo "checksum=${CHECKSUM}" >> "$GITHUB_OUTPUT"
-          echo "Fetched checksum: ${CHECKSUM}"
+          CHECKSUM=$(curl -sfL "https://github.com/opentofu/opentofu/releases/download/v1.8.3/tofu_1.8.3_SHA256SUMS" \
+            | grep "tofu_1.8.3_linux_amd64.zip" | awk '{print $1}')
+          echo "TOFU_CHECKSUM=$CHECKSUM" >> "$GITHUB_ENV"
+          echo "Fetched checksum: $CHECKSUM"
       - id: action
         uses: .
         with:
           tofu_version: '1.8.3'
           tofu_wrapper: 'false'
-          checksums: ${{ steps.get-checksum.outputs.checksum }}
+          checksums: ${{ env.TOFU_CHECKSUM }}
       - name: Assert tofu is installed
         run: |
-          if ! command -v tofu &>/dev/null; then
-            echo "FAIL: tofu binary not found in PATH"
+          TOFU_VER=$(tofu version | head -1)
+          echo "tofu version: $TOFU_VER"
+          if ! echo "$TOFU_VER" | grep -q "1.8.3"; then
+            echo "FAIL: expected version 1.8.3"
             exit 1
           fi
-          echo "PASS: tofu is installed"
-          tofu version
+          echo "PASS: tofu installed successfully with checksums input verified"

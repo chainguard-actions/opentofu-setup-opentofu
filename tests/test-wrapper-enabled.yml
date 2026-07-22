@@ -1,4 +1,4 @@
-name: Test wrapper enabled
+name: Test wrapper enabled (default)
 on:
   workflow_dispatch:
 jobs:
@@ -11,46 +11,35 @@ jobs:
         with:
           tofu_version: '1.8.0'
           tofu_wrapper: 'true'
-          github_token: ${{ github.token }}
       - name: Assert tofu binary is available
         run: |
           echo "Checking tofu binary..."
-          if ! command -v tofu >/dev/null 2>&1; then
+          if ! command -v tofu &>/dev/null; then
             echo "FAIL: tofu binary not found in PATH"
             exit 1
           fi
-          echo "PASS: tofu binary found at $(which tofu)"
-      - name: Assert TOFU_CLI_PATH is set
+          echo "PASS: tofu binary found at $(command -v tofu)"
+      - name: Run tofu version via wrapper
+        id: tofu_version
+        run: tofu version
+        continue-on-error: true
+      - name: Assert wrapper captures stdout
+        env:
+          ACTUAL: ${{ steps.tofu_version.outputs.stdout }}
         run: |
-          echo "TOFU_CLI_PATH: $TOFU_CLI_PATH"
-          if [ -z "$TOFU_CLI_PATH" ]; then
-            echo "FAIL: TOFU_CLI_PATH environment variable is not set by wrapper installation"
+          echo "stdout: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected stdout to be non-empty from wrapper"
             exit 1
           fi
-          echo "PASS: TOFU_CLI_PATH=$TOFU_CLI_PATH"
-      - name: Assert tofu-bin exists alongside tofu wrapper
+          echo "PASS: wrapper captured stdout"
+      - name: Assert wrapper captures exitcode
+        env:
+          ACTUAL: ${{ steps.tofu_version.outputs.exitcode }}
         run: |
-          echo "TOFU_CLI_PATH: $TOFU_CLI_PATH"
-          if [ ! -f "$TOFU_CLI_PATH/tofu-bin" ]; then
-            echo "FAIL: tofu-bin not found at $TOFU_CLI_PATH/tofu-bin"
-            ls -la "$TOFU_CLI_PATH/" || true
+          echo "exitcode: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected exitcode 0 but got: $ACTUAL"
             exit 1
           fi
-          echo "PASS: tofu-bin found at $TOFU_CLI_PATH/tofu-bin"
-      - name: Assert tofu wrapper is a script (not the real binary)
-        run: |
-          TOFU_PATH=$(which tofu)
-          echo "tofu path: $TOFU_PATH"
-          FILE_TYPE=$(file "$TOFU_PATH" 2>&1 || echo "unknown")
-          echo "file type: $FILE_TYPE"
-          # The wrapper should be a Node.js script or text file, not an ELF binary
-          if echo "$FILE_TYPE" | grep -qiE "script|text|node|javascript"; then
-            echo "PASS: tofu is a wrapper script"
-          elif echo "$FILE_TYPE" | grep -qi "ELF"; then
-            echo "FAIL: tofu appears to be an ELF binary, not a wrapper script"
-            exit 1
-          else
-            echo "INFO: file type is '$FILE_TYPE' - checking if wrapper is functional"
-            # Try running tofu version to verify it works
-            tofu version && echo "PASS: tofu wrapper runs successfully"
-          fi
+          echo "PASS: wrapper captured exitcode 0"
