@@ -8,7 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
-| v1 | [`v1`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v1) | [`e95ccdd`](https://github.com/opentofu/setup-opentofu/commit/e95ccdd20623115bfd7d47df14a3250d6066a9d0) |
+| v1 | [`v1`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v1) | [`000eeb8`](https://github.com/opentofu/setup-opentofu/commit/000eeb8522f0572907c393e8151076c205fdba1b) |
 | v1.0.6 | [`v1.0.6`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v1.0.6) | [`000eeb8`](https://github.com/opentofu/setup-opentofu/commit/000eeb8522f0572907c393e8151076c205fdba1b) |
 | v1.0.7 | [`v1.0.7`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v1.0.7) | [`e95ccdd`](https://github.com/opentofu/setup-opentofu/commit/e95ccdd20623115bfd7d47df14a3250d6066a9d0) |
 | v1.0.8 | [`v1.0.8`](https://github.com/chainguard-actions/opentofu-setup-opentofu/tree/v1.0.8) | [`9d84900`](https://github.com/opentofu/setup-opentofu/commit/9d84900f3238fab8cd84ce47d658d25dd008be2f) |
