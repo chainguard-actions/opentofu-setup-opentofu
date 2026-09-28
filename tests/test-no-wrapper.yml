@@ -1,0 +1,41 @@
+name: Test OpenTofu installation without wrapper
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: 'latest'
+          tofu_wrapper: 'false'
+          github_token: ${{ github.token }}
+      - name: Assert tofu binary is on PATH
+        run: |
+          which tofu
+          echo "PASS: tofu found at $(which tofu)"
+      - name: Assert tofu runs without wrapper
+        run: |
+          OUTPUT=$(tofu --version)
+          echo "tofu version output: $OUTPUT"
+          if echo "$OUTPUT" | grep -qi "opentofu"; then
+            echo "PASS: tofu version output contains 'OpenTofu'"
+          else
+            echo "FAIL: unexpected tofu version output: $OUTPUT"
+            exit 1
+          fi
+      - name: Assert wrapper is not active (no wrapper script in place)
+        run: |
+          TOFU_PATH=$(which tofu)
+          echo "tofu path: $TOFU_PATH"
+          # When wrapper is disabled, tofu should be the real binary, not a shell script
+          # The real binary will be an ELF executable, not a shell script
+          FILE_TYPE=$(file "$TOFU_PATH")
+          echo "file type: $FILE_TYPE"
+          if echo "$FILE_TYPE" | grep -q "shell script"; then
+            echo "FAIL: tofu appears to be a wrapper shell script, but wrapper should be disabled"
+            exit 1
+          fi
+          echo "PASS: tofu is not a wrapper shell script"

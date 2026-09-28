@@ -1,0 +1,29 @@
+name: Test basic usage - latest OpenTofu with wrapper
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup
+        uses: .
+        with:
+          tofu_version: 'latest'
+          tofu_wrapper: 'true'
+          github_token: ${{ github.token }}
+      - name: Assert tofu binary is on PATH
+        run: |
+          echo "Checking tofu is available..."
+          which tofu
+          echo "PASS: tofu found at $(which tofu)"
+      - name: Assert tofu version runs successfully
+        run: |
+          OUTPUT=$(tofu --version)
+          echo "tofu version output: $OUTPUT"
+          if echo "$OUTPUT" | grep -qi "opentofu"; then
+            echo "PASS: tofu version output contains 'OpenTofu'"
+          else
+            echo "FAIL: unexpected tofu version output: $OUTPUT"
+            exit 1
+          fi
